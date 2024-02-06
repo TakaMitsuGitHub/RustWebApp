@@ -1,86 +1,23 @@
-extern crate polars;
+use std::io::Result;
+use actix_web::{App, HttpServer, Responder, HttpResponse, get,
+                middleware::Logger};
+use env_logger::Env;
 
-use polars::error::PolarsError;
-use polars::prelude::*;
-use actix_web::{web, App, HttpResponse, HttpServer};
 
-#[actix_web::main]
-async fn main() {
-    let server = HttpServer::new(|| {
-        App::new()
-            .route("/", web::get().to(get_index))
-            .route("/gcd", web::post().to(post_gcd))
-    });
-    let _ = df_print();
-
-    println!("Server on http://localhost:8020...");
-    server.bind("127.0.0.1:8020").expect("eeror binding server to address")
-    .run()
-    .await
-    .expect("error rinning server");
+#[get("/")]
+async fn index() -> impl Responder {
+    HttpResponse::Ok().body("Hello, Actix Web")
 }
 
+#[actix_rt::main]
+async fn main() -> Result<()> {
 
-async fn get_index() -> HttpResponse {
-    HttpResponse::Ok()
-        .content_type("text/html")
-        .body(
-        r#"
-            <title>GCD Calculator</title>
-            <form action="/gcd" method="post">
-            <input type="text" name="n"/>
-            <input type="text" name="m"/>
-            <button type="submit">Compute GCD</button>
-            </form>
-        "#,
-        )
+    env_logger::init_from_env(Env::default().dafault_filter_or("info"));
+
+    HttpServer::new(|| {
+        App::new().service(index)
+        .wrap(Logger::default())
+    }).bind("127.0.0.1:8000")?.run().await
 }
 
-use serde::Deserialize;
-#[derive(Deserialize)]
-struct GcdParameters {
-    n: u64,
-    m: u64,
-}
-
-async fn post_gcd(form: web::Form<GcdParameters>) -> HttpResponse {
-    if form.n == 0 || form.m == 0 {
-        return HttpResponse::BadRequest()
-            .content_type("text/html")
-            .body("Computing zero");
-    }
-
-    let response = 
-        format!("The gratest divisor of numbers {} and {} \
-                is <b>{}</b>\n",
-                form.n, form.m, gcd(form.n, form.m));
-
-    HttpResponse::Ok()
-        .content_type("text/html")
-        .body(response)
-}
-
-fn gcd(mut n: u64, mut m: u64) -> u64 {
-    assert!(n != 0 && m != 0);
-    while m != 0 {
-        if m < n {
-            let t = m;
-            m = n;
-            n = t;
-        }
-        m = m % n;
-    }
-    n
-}
-
-fn df_print() -> Result<(), PolarsError> {
-    let df = df! [
-        "name" => ["Yamada", "Suzuki", "Tanaka"],
-        "age" => [30, 25, 40],
-        "city" => ["Tokyo", "Osaka", "Kyoto"]
-    ]?;
-
-    println!("{:?}", df);
-
-    Ok(())
-}
+// https://atmarkit.itmedia.co.jp/ait/articles/2311/17/news004.html
