@@ -1,3 +1,7 @@
+extern crate polars;
+
+use polars::error::PolarsError;
+use polars::prelude::*;
 use actix_web::{web, App, HttpResponse, HttpServer};
 
 #[actix_web::main]
@@ -7,6 +11,7 @@ async fn main() {
             .route("/", web::get().to(get_index))
             .route("/gcd", web::post().to(post_gcd))
     });
+    let _ = df_print();
 
     println!("Server on http://localhost:8020...");
     server.bind("127.0.0.1:8020").expect("eeror binding server to address")
@@ -66,4 +71,16 @@ fn gcd(mut n: u64, mut m: u64) -> u64 {
         m = m % n;
     }
     n
+}
+
+fn df_print() -> Result<(), PolarsError> {
+    let df = df! [
+        "name" => ["Yamada", "Suzuki", "Tanaka"],
+        "age" => [30, 25, 40],
+        "city" => ["Tokyo", "Osaka", "Kyoto"]
+    ]?;
+
+    println!("{:?}", df);
+
+    Ok(())
 }
