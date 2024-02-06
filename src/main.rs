@@ -1,12 +1,19 @@
 use std::io::Result;
-use actix_web::{App, HttpServer, Responder, HttpResponse, get,
+use log::info;
+use actix_web::{App, HttpServer, Responder, HttpResponse, get, post
                 middleware::Logger};
 use env_logger::Env;
 
 
-#[get("/")]
-async fn index() -> impl Responder {
-    HttpResponse::Ok().body("Hello, Actix Web")
+// #[get("/")]
+// async fn index() -> impl Responder {
+//     HttpResponse::Ok().body("Hello, Actix Web")
+// }
+
+#[get("/posts")]
+pub async fn index() -> impl Responder {
+    info!("called index");
+    HttpResponse::Ok().body("Called index")
 }
 
 #[actix_rt::main]
